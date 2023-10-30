@@ -15,7 +15,8 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 0, 140, 255)),
+          colorScheme:
+              ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 0, 140, 255)),
           useMaterial3: true,
         ),
         home: const MyHomePage(),
@@ -32,7 +33,7 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleFavoritos(){
+  void toggleFavoritos() {
     if (favoritos.contains(current)) {
       favoritos.remove(current);
     } else {
@@ -46,39 +47,34 @@ class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    IconData icon;
-    var idea = appState.current;
-    if (appState.favoritos.contains(idea)) {
-      icon = Icons.favorite;
-    } else {
-      icon = Icons.favorite_border_outlined;
-    }
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("idea"),
-            BigCard(idea: appState.current),
-            SizedBox(height: 100.0,),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: (){appState.toggleFavoritos();}, 
-                  icon: Icon(icon),
-                  label: Text("Favorito")),
-                  SizedBox(width: 20.0,),
-                ElevatedButton(
-                    onPressed: () {
-                      appState.getSiguiente();
-                    },
-                    child: Text("Siguiente")),
+      body: Row(
+        children: [
+          SafeArea(
+            child: NavigationRail(
+              extended: false,
+              destinations: [
+                NavigationRailDestination(
+                icon: Icon(Icons.home), 
+                label: Text("Inicio")
+                ),
+                NavigationRailDestination(
+                icon: Icon(Icons.favorite), 
+                label: Text("Favorito")
+                ),
               ],
+              selectedIndex: 0,
+              onDestinationSelected: (value){
+                print("Seleccion: $value");
+              },
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: Container(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: GeneratorPage(),
+            ))
+        ],
       ),
     );
   }
@@ -99,10 +95,55 @@ class BigCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Text(
-          idea.asLowerCase, 
+          idea.asLowerCase,
           style: textStyle,
           semanticsLabel: "${idea.first} ${idea.second}",
         ),
+      ),
+    );
+  }
+}
+
+class GeneratorPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    IconData icon;
+    var idea = appState.current;
+    if (appState.favoritos.contains(idea)) {
+      icon = Icons.favorite;
+    } else {
+      icon = Icons.favorite_border_outlined;
+    }
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("idea"),
+          BigCard(idea: appState.current),
+          SizedBox(
+            height: 100.0,
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                  onPressed: () {
+                    appState.toggleFavoritos();
+                  },
+                  icon: Icon(icon),
+                  label: Text("Favorito")),
+              SizedBox(
+                width: 20.0,
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    appState.getSiguiente();
+                  },
+                  child: Text("Siguiente")),
+            ],
+          ),
+        ],
       ),
     );
   }
