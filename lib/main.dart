@@ -170,6 +170,26 @@ class GeneratorPage extends StatelessWidget {
 class FavoritosPage extends StatelessWidget {
   @override
   Widget build(BuildContext context)  {
-    return Text("favoritos");
+    var appState = context.watch<MyAppState>();
+
+    if (appState.favoritos.isEmpty) {
+      return Center(
+        child: Text("No hay favoritos aun"),
+      );
+    }
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text("Total de favoritos: ${appState.favoritos.length} "),
+          ),
+          for(var name in appState.favoritos)
+            ListTile(
+              leading:  Icon(Icons.favorite),
+              title: Text(name.asLowerCase),
+            )
+      ],
+    );
   }
 }
