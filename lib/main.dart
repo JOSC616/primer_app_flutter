@@ -29,20 +29,28 @@ class MyApp extends StatelessWidget {
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var favoritos = <WordPair>[];
+  var historial = <WordPair>[];
+
+  GlobalKey? historialListKey;
   void getSiguiente() {
+    historial.insert(0, current);
+    var animatedList = historialListKey?.currentState as AnimatedListState?;
+    animatedList?.insertItem(0);
     current = WordPair.random();
     notifyListeners();
   }
 
-  void toggleFavoritos() {
-    if (favoritos.contains(current)) {
-      favoritos.remove(current);
+  void toggleFavoritos({WordPair? idea}) {//MANTENIMIENTO
+    idea = idea?? current; 
+    if (favoritos.contains(idea)) {
+      favoritos.remove(idea);
     } else {
-      favoritos.add(current);
+      favoritos.add(idea);
     }
     notifyListeners();
   }
 }
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -53,48 +61,48 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     Widget page;
-    switch(selectedIndex){
-      case 0: page = GeneratorPage(); break;
-      case 1: page = FavoritosPage(); break;
+    switch (selectedIndex) {
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page = FavoritosPage();
+        break;
       default:
         throw UnimplementedError('No hay widgets para: $selectedIndex');
     }
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Scaffold(
-          body: Row(
-            children: [
-              SafeArea(child: NavigationRail(
+    return LayoutBuilder(builder: (context, constraints) {
+      return Scaffold(
+        body: Row(
+          children: [
+            SafeArea(
+              child: NavigationRail(
                 extended: constraints.maxWidth >= 600,
                 destinations: [
                   NavigationRailDestination(
-                    icon: Icon(Icons.home), 
-                    label: Text("Inicio")),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.favorite), 
-                      label: Text("Favoritos"))
+                      icon: Icon(Icons.home), label: Text("Inicio")),
+                  NavigationRailDestination(
+                      icon: Icon(Icons.favorite), label: Text("Favoritos"))
                 ],
                 selectedIndex: selectedIndex,
-                onDestinationSelected: (value){
+                onDestinationSelected: (value) {
                   setState(() {
                     selectedIndex = value;
                   });
                 },
               ),
-              ),
-              Expanded(
+            ),
+            Expanded(
                 child: Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: page,
-                )),
-              ],
-              ),
-            );
-      }
-    )
-    ;
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: page,
+            )),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -137,7 +145,11 @@ class GeneratorPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("idea"),
+          Expanded(
+            flex: 3,
+            child: HistorialListView()
+            ),
+            SizedBox(height: 20,),
           BigCard(idea: appState.current),
           SizedBox(
             height: 100.0,
@@ -147,7 +159,7 @@ class GeneratorPage extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                   onPressed: () {
-                    appState.toggleFavoritos();
+                    appState.toggleFavoritos(idea: idea);
                   },
                   icon: Icon(icon),
                   label: Text("Favorito")),
@@ -161,6 +173,7 @@ class GeneratorPage extends StatelessWidget {
                   child: Text("Siguiente")),
             ],
           ),
+          Spacer(flex: 3),
         ],
       ),
     );
@@ -169,7 +182,7 @@ class GeneratorPage extends StatelessWidget {
 
 class FavoritosPage extends StatelessWidget {
   @override
-  Widget build(BuildContext context)  {
+  Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
     if (appState.favoritos.isEmpty) {
@@ -183,13 +196,67 @@ class FavoritosPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(20.0),
           child: Text("Total de favoritos: ${appState.favoritos.length} "),
-          ),
-          for(var name in appState.favoritos)
-            ListTile(
-              leading:  Icon(Icons.favorite),
-              title: Text(name.asLowerCase),
-            )
+        ),
+        for (var name in appState.favoritos)
+          ListTile(
+            leading: Icon(Icons.favorite),
+            title: Text(name.asLowerCase),
+          )
       ],
+    );
+  }
+}
+
+class HistorialListView extends StatefulWidget {
+  const HistorialListView({super.key});
+
+  @override
+  State<HistorialListView> createState() => _HistorialListView();
+}
+
+class _HistorialListView extends State<HistorialListView> {
+  final _key = GlobalKey();
+  static const Gradient _maskingGradient = LinearGradient(
+    colors: [Colors.transparent, Colors.black],
+    stops: [0.0, 0.5],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<MyAppState>();
+    appState.historialListKey = _key;
+    return ShaderMask(
+      shaderCallback: (bounds) => _maskingGradient.createShader(bounds),
+      blendMode: BlendMode.dstIn,
+      child: AnimatedList(
+        key: _key,
+        reverse: true,
+        initialItemCount: appState.historial.length,
+        itemBuilder: (context, index, animation) {
+          final idea = appState.historial[index];
+          return SizeTransition(
+            sizeFactor: animation,
+            child: Center(
+              child: TextButton.icon(
+                  onPressed: () {
+                    appState.toggleFavoritos(idea: idea);
+                  },
+                  icon: appState.favoritos.contains(idea)
+                      ? Icon(
+                          Icons.favorite,
+                          size: 12,
+                        )
+                      : SizedBox(),
+                  label: Text(
+                    idea.asLowerCase,
+                    semanticsLabel: idea.asPascalCase,
+                  )),
+            ),
+          );
+        },
+      ),
     );
   }
 }
