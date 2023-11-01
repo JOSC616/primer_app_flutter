@@ -42,41 +42,54 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
+
   @override
-  Widget build(BuildContext context) {
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  var selectedIndex = 0;
+  @override
+  Widget build(BuildContext context){
+    Widget page;
+    switch(selectedIndex){
+      case 0: page = GeneratorPage(); break;
+      case 1: page = Placeholder(); break;
+      default:
+        throw UnimplementedError('No hay widgets para: $selectedIndex');
+    }
     return Scaffold(
       body: Row(
         children: [
-          SafeArea(
-            child: NavigationRail(
-              extended: false,
-              destinations: [
-                NavigationRailDestination(
+          SafeArea(child: NavigationRail(
+            extended: false,
+            destinations: [
+              NavigationRailDestination(
                 icon: Icon(Icons.home), 
-                label: Text("Inicio")
-                ),
+                label: Text("Inicio")),
                 NavigationRailDestination(
-                icon: Icon(Icons.favorite), 
-                label: Text("Favorito")
-                ),
-              ],
-              selectedIndex: 0,
-              onDestinationSelected: (value){
-                print("Seleccion: $value");
-              },
-            ),
+                  icon: Icon(Icons.favorite), 
+                  label: Text("Favoritos"))
+            ],
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (value){
+              setState(() {
+                selectedIndex = value;
+              });
+            },
+          ),
           ),
           Expanded(
             child: Container(
               color: Theme.of(context).colorScheme.primaryContainer,
-              child: GeneratorPage(),
-            ))
-        ],
-      ),
-    );
+              child: page,
+            )),
+          ],
+          ),
+        )
+    ;
   }
 }
 
