@@ -30,17 +30,45 @@ class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var favoritos = <WordPair>[];
   var historial = <WordPair>[];
+  var index = -1;
 
   GlobalKey? historialListKey;
+
   void getSiguiente() {
-    historial.insert(0, current);
-    var animatedList = historialListKey?.currentState as AnimatedListState?;
-    animatedList?.insertItem(0);
-    current = WordPair.random();
+    if (index > 0) {
+      --index;
+      current = historial.elementAt(index);
+    }else{
+      if (!historial.contains(current)) {
+        historial.insert(0, current);
+        var animatedList = historialListKey?.currentState as AnimatedListState?;
+        animatedList?.insertItem(0);
+      }
+      current = WordPair.random();
+      index = -1;
+    }
     notifyListeners();
+    // historial.insert(0, current);
+    // var animatedList = historialListKey?.currentState as AnimatedListState?;
+    // animatedList?.insertItem(0);
+    // current = WordPair.random();
+    // notifyListeners();
   }
 
-  void toggleFavoritos({WordPair? idea}) {//MANTENIMIENTO
+  void getAnterior(){
+    if (index < historial.length-1) {
+      if (index == -1) {
+        historial.insert(0, current);
+        var animatedList = historialListKey?.currentState as AnimatedListState?;
+        animatedList?.insertItem(0);
+        ++index;
+      }
+      ++index;
+      current = historial.elementAt(index);
+    }
+    notifyListeners();
+  }
+  void toggleFavoritos({WordPair? idea}) {
     idea = idea?? current; 
     if (favoritos.contains(idea)) {
       favoritos.remove(idea);
@@ -49,6 +77,12 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void eliminar ([WordPair? idea]){
+    favoritos.remove(idea);
+    notifyListeners();
+  }
+
 }
 
 class MyHomePage extends StatefulWidget {
@@ -195,6 +229,15 @@ class GeneratorPage extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                   onPressed: () {
+                    appState.getAnterior();
+                  },
+                  icon: Icon(Icons.arrow_left),
+                  label: Text("Anterior")),
+              SizedBox(
+                width: 20.0,
+              ),
+              ElevatedButton.icon(
+                  onPressed: () {
                     appState.toggleFavoritos(idea: idea);
                   },
                   icon: Icon(icon),
@@ -202,11 +245,13 @@ class GeneratorPage extends StatelessWidget {
               SizedBox(
                 width: 20.0,
               ),
-              ElevatedButton(
+              ElevatedButton.icon(
                   onPressed: () {
                     appState.getSiguiente();
                   },
-                  child: Text("Siguiente")),
+                  icon: Icon(Icons.arrow_right),
+                  label: Text("Siguiente"),
+              ),
             ],
           ),
           Spacer(flex: 3),
@@ -235,7 +280,13 @@ class FavoritosPage extends StatelessWidget {
         ),
         for (var name in appState.favoritos)
           ListTile(
-            leading: Icon(Icons.favorite),
+            leading: IconButton(
+              icon: Icon(Icons.delete_outline, semanticLabel: 'Eliminar'),
+              color: Theme.of(context).colorScheme.primary,
+              onPressed: (){
+                appState.eliminar(name);
+              },
+              ),
             title: Text(name.asLowerCase),
           )
       ],
