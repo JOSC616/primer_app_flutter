@@ -73,36 +73,72 @@ class _MyHomePageState extends State<MyHomePage> {
       default:
         throw UnimplementedError('No hay widgets para: $selectedIndex');
     }
-    return LayoutBuilder(builder: (context, constraints) {
-      return Scaffold(
-        body: Row(
-          children: [
-            SafeArea(
-              child: NavigationRail(
-                extended: constraints.maxWidth >= 600,
-                destinations: [
-                  NavigationRailDestination(
+    return Scaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 600) {
+            return Row(
+              children: [
+                SafeArea(
+                  child: NavigationRail(
+                  extended: constraints.maxWidth >= 600,
+                  destinations: [
+                    NavigationRailDestination(
                       icon: Icon(Icons.home), label: Text("Inicio")),
-                  NavigationRailDestination(
+                    NavigationRailDestination(
                       icon: Icon(Icons.favorite), label: Text("Favoritos"))
-                ],
-                selectedIndex: selectedIndex,
-                onDestinationSelected: (value) {
+                  ],
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
                   setState(() {
                     selectedIndex = value;
                   });
-                },
+                  },
+                ),
               ),
-            ),
             Expanded(
-                child: Container(
+              child: Container(
               color: Theme.of(context).colorScheme.primaryContainer,
               child: page,
-            )),
-          ],
-        ),
-      );
-    });
+              )
+            ),
+          ]
+          );
+          }else{
+            return Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: page,
+                  ),
+                ),
+                SafeArea(
+                  child: BottomNavigationBar(
+                    items: [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.home),
+                        label: "Home",
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.favorite),
+                        label: "Favoritos"
+                      ),
+                    ],
+                    currentIndex: selectedIndex,
+                    onTap: 	(value){
+                      setState(() {
+                        selectedIndex = value;
+                      });
+                    },
+                  )
+                )
+              ],
+            );
+          }
+        }
+      )
+    );
   }
 }
 
